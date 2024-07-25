@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech Innovations Knowledge Graph</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .node circle {
+            stroke: #fff;
+            stroke-width: 1.5px;
+        }
+        .node text {
+            pointer-events: none;
+            font-size: 10px;
+        }
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+        #graph {
+            width: 100%;
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tech Innovations Knowledge Graph</h1>
+    <div id="graph"></div>
+
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script>
+        var width = 960,
+            height = 600;
+
+        var svg = d3.select("#graph").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+        var simulation = d3.forceSimulation()
+            .force("link", d3.forceLink().id(function(d) { return d.id; }).distance(100))
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+        var graph = {
+            nodes: [
+                {id: "Artificial Intelligence", group: 1},
+                {id: "Quantum Computing", group: 1},
+                {id: "Blockchain", group: 1},
+                {id: "Internet of Things (IoT)", group: 1},
+                {id: "Cloud Computing", group: 1},
+                {id: "5G Technology", group: 1},
+                {id: "Virtual Reality (VR) / Augmented Reality (AR)", group: 1},
+                {id: "Alan Turing", group: 2},
+                {id: "Claude Shannon", group: 2},
+                {id: "Tim Berners-Lee", group: 2},
+                {id: "Elon Musk", group: 2},
+                {id: "Satoshi Nakamoto", group: 2},
+                {id: "Turing Machine", group: 3},
+                {id: "Information Theory", group: 3},
+                {id: "Cryptographic Hash Functions", group: 3},
+                {id: "Quantum Mechanics", group: 3},
+                {id: "Network Theory", group: 3},
+                {id: "Google", group: 4},
+                {id: "IBM", group: 4},
+                {id: "Microsoft", group: 4},
+                {id: "Amazon", group: 4},
+                {id: "SpaceX", group: 4},
+                {id: "Ethereum Foundation", group: 4}
+            ],
+            links: [
+                {source: "Artificial Intelligence", target: "Alan Turing", value: 1},
+                {source: "Artificial Intelligence", target: "Claude Shannon", value: 1},
+                {source: "Artificial Intelligence", target: "Google", value: 1},
+                {source: "Artificial Intelligence", target: "IBM", value: 1},
+                {source: "Artificial Intelligence", target: "Microsoft", value: 1},
+                {source: "Blockchain", target: "Satoshi Nakamoto", value: 1},
+                {source: "Blockchain", target: "Cryptographic Hash Functions", value: 1},
+                {source: "Blockchain", target: "Ethereum Foundation", value: 1},
+                {source: "Blockchain", target: "IBM", value: 1},
+                {source: "Quantum Computing", target: "Quantum Mechanics", value: 1},
+                {source: "Quantum Computing", target: "IBM", value: 1},
+                {source: "Quantum Computing", target: "Google", value: 1},
+                {source: "Quantum Computing", target: "Microsoft", value: 1},
+                {source: "Internet of Things (IoT)", target: "Network Theory", value: 1},
+                {source: "Internet of Things (IoT)", target: "Amazon", value: 1},
+                {source: "Internet of Things (IoT)", target: "Microsoft", value: 1},
+                {source: "Virtual Reality (VR) / Augmented Reality (AR)", target: "Information Theory", value: 1},
+                {source: "Virtual Reality (VR) / Augmented Reality (AR)", target: "Google", value: 1},
+                {source: "Virtual Reality (VR) / Augmented Reality (AR)", target: "Microsoft", value: 1},
+                {source: "5G Technology", target: "Internet of Things (IoT)", value: 1},
+                {source: "Cloud Computing", target: "Artificial Intelligence", value: 1},
+                {source: "Cloud Computing", target: "Internet of Things (IoT)", value: 1},
+                {source: "Cloud Computing", target: "Amazon", value: 1},
+                {source: "Cloud Computing", target: "Microsoft", value: 1},
+                {source: "Artificial Intelligence", target: "Quantum Computing", value: 1}
+            ]
+        };
+
+        var link = svg.append("g")
+            .attr("class", "links")
+            .selectAll("line")
+            .data(graph.links)
+            .enter().append("line")
+            .attr("stroke-width", function(d) { return Math.sqrt(d.value); });
+
+        var node = svg.append("g")
+            .attr("class", "nodes")
+            .selectAll("g")
+            .data(graph.nodes)
+            .enter().append("g");
+
+        var circles = node.append("circle")
+            .attr("r", 10)
+            .attr("fill", function(d) { return color(d.group); })
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        var labels = node.append("text")
+            .text(function(d) { return d.id; })
+            .attr('x', 6)
+            .attr('y', 3);
+
+        node.append("title")
+            .text(function(d) { return d.id; });
+
+        simulation
+            .nodes(graph.nodes)
+            .on("tick", ticked);
+
+        simulation.force("link")
+            .links(graph.links);
+
+        function ticked() {
+            link
+                .attr("x1", function(d) { return d.source.x; })
+                .attr("y1", function(d) { return d.source.y; })
+                .attr("x2", function(d) { return d.target.x; })
+                .attr("y2", function(d) { return d.target.y; });
+
+            node
+                .attr("transform", function(d) {
+                    return "translate(" + d.x + "," + d.y + ")";
+                });
+        }
+
+        function dragstarted(d) {
+            if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(d) {
+            d.fx = d3.event.x;
+            d.fy = d3.event.y;
+        }
+
+        function dragended(d) {
+            if (!d3.event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+    </script>
+</body>
+</html>
